@@ -1,0 +1,9 @@
+echo === Setting bootargs ===
+setenv bootargs console=ttyS0,115200n8 root=PARTUUID=00000000-03 rw rootfstype=ext4 rootwait
+
+echo === Loadding elements ===
+fatload mmc 0:2 ${loadaddr} zImage
+fatload mmc 0:2 ${fdt_addr_r} socfpga_cyclone5_de0_nano_soc.dtb
+
+echo === Starting out ===
+bootz ${loadaddr} - ${fdt_addr_r}
