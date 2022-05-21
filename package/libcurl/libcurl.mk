@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-LIBCURL_VERSION = 7.75.0
+LIBCURL_VERSION = 7.83.1
 LIBCURL_SOURCE = curl-$(LIBCURL_VERSION).tar.xz
-LIBCURL_SITE = https://curl.haxx.se/download
+LIBCURL_SITE = https://curl.se/download
 LIBCURL_DEPENDENCIES = host-pkgconf \
 	$(if $(BR2_PACKAGE_ZLIB),zlib) \
 	$(if $(BR2_PACKAGE_RTMPDUMP),rtmpdump)
@@ -19,12 +19,12 @@ LIBCURL_INSTALL_STAGING = YES
 # We disable NTLM support because it uses fork(), which doesn't work
 # on non-MMU platforms. Moreover, this authentication method is
 # probably almost never used. See
-# http://curl.haxx.se/docs/manpage.html#--ntlm.
+# http://curl.se/docs/manpage.html#--ntlm.
 # Likewise, there is no compiler on the target, so libcurl-option (to
 # generate C code) isn't very useful
 LIBCURL_CONF_OPTS = --disable-manual --disable-ntlm-wb \
 	--enable-hidden-symbols --with-random=/dev/urandom --disable-curldebug \
-	--disable-libcurl-option
+	--disable-libcurl-option --disable-ldap --disable-ldaps
 
 ifeq ($(BR2_TOOLCHAIN_HAS_THREADS),y)
 LIBCURL_CONF_OPTS += --enable-threaded-resolver
@@ -66,14 +66,6 @@ LIBCURL_CONF_OPTS += --with-gnutls=$(STAGING_DIR)/usr \
 LIBCURL_DEPENDENCIES += gnutls
 else
 LIBCURL_CONF_OPTS += --without-gnutls
-endif
-
-ifeq ($(BR2_PACKAGE_LIBCURL_LIBNSS),y)
-LIBCURL_CONF_OPTS += --with-nss=$(STAGING_DIR)/usr
-LIBCURL_CONF_ENV += CPPFLAGS="$(TARGET_CPPFLAGS) `$(PKG_CONFIG_HOST_BINARY) nspr nss --cflags`"
-LIBCURL_DEPENDENCIES += libnss
-else
-LIBCURL_CONF_OPTS += --without-nss
 endif
 
 ifeq ($(BR2_PACKAGE_LIBCURL_MBEDTLS),y)
@@ -126,6 +118,13 @@ else
 LIBCURL_CONF_OPTS += --without-nghttp2
 endif
 
+ifeq ($(BR2_PACKAGE_LIBGSASL),y)
+LIBCURL_DEPENDENCIES += libgsasl
+LIBCURL_CONF_OPTS += --with-libgsasl
+else
+LIBCURL_CONF_OPTS += --without-libgsasl
+endif
+
 ifeq ($(BR2_PACKAGE_LIBCURL_COOKIES_SUPPORT),y)
 LIBCURL_CONF_OPTS += --enable-cookies
 else
@@ -143,8 +142,6 @@ LIBCURL_CONF_OPTS += \
 	--enable-dict \
 	--enable-gopher \
 	--enable-imap \
-	--enable-ldap \
-	--enable-ldaps \
 	--enable-pop3 \
 	--enable-rtsp \
 	--enable-smb \
@@ -156,8 +153,6 @@ LIBCURL_CONF_OPTS += \
 	--disable-dict \
 	--disable-gopher \
 	--disable-imap \
-	--disable-ldap \
-	--disable-ldaps \
 	--disable-pop3 \
 	--disable-rtsp \
 	--disable-smb \
